@@ -1,0 +1,12 @@
+.DS_Store
+.idea
+*.log
+tmp/
+debug.clj
+.clj-kondo/
+.cpcache/
+.lsp/
+.nrepl-port
+*.html
+*.svg
+*.png
