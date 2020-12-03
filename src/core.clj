@@ -6,16 +6,18 @@
    ))
 
 ;; TODO:
-;; - random weight
-;; - eccentricity, radius, diameter
 ;; - tests for all fns
+
+;; The eccentricity of a vertex v is defined as the greatest distance between v and any other vertex.
+;; The radius of a graph is the minimum eccentricity of any vertex in a graph.
+;; The diameter of a graph is the maximum eccentricity of any vertex in a graph.
 
 (defn G
   " N - size of generated graph
       S - sparseness (number of directed edges actually; from N-1 to N(N-1)/2)
       Returns: simple connected graph G(n,s) with N vertices and S edges "
   [N S]
-  (g/densify-oriented (g/rand-graph :naive N) N S))
+  (g/densify-oriented (g/rand-graph :naive N) N S 10))
 
 (defn D
   "Calculates shortest path from start to target vertex in graph. Returns a map
@@ -23,12 +25,37 @@
   [graph start target]
   (g/shortest-path graph start target))
 
+(defn eccentricity [graph vertex]
+  (let  [vertices (g/dijkstra graph vertex)]
+    (apply max (map :weight (vals vertices)))))
+
+(defn eccentricities [graph]
+  (map (partial eccentricity graph) (range (count graph))))
+
+(defn radius [graph]
+  (apply min (eccentricities graph)))
+
+(defn diameter [graph]
+  (apply max (eccentricities graph)))
+
 ;; DEBUG
 (comment
+  (let [size 10
+        graph (G 10 (g/max-density size))]
+    (println "Eccentricity: " (eccentricity graph 0))
+    (println "Eccentricities: " (eccentricities graph))
+    (println "Radius: " (radius graph))
+    (println "Diameter: " (diameter graph))))
+
+(comment
   (let [size 5
-        graph (G size (inc (g/min-density size)))]
+        graph (G size (g/max-density size))]
     (v/print-matrix graph)
-    (v/show graph {:directed? true})))
+    (println (D graph 0 4))
+    (println (D graph 1 2))
+    (println (D graph 0 4))
+    (v/show graph {:directed? true})
+    nil))
 
 (comment
   (do

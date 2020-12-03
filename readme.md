@@ -14,6 +14,21 @@ The function G and D are in the core namespace:
     (D (G 5 4) 0 1)  ;; returns shortest path from vertex 0 to 1 or nil
     => {:path (0 1), :weight 1}
     
+The functions eccentricity, radius and diamter are also in the core namespace:
+
+    (let [size 10
+        graph (G 10 (g/max-density size))]
+      (println "Eccentricity: " (eccentricity graph 0))
+      (println "Eccentricities: " (eccentricities graph))
+      (println "Radius: " (radius graph))
+      (println "Diameter: " (diameter graph)))
+    =>  
+    Eccentricity:  13
+    Eccentricities:  (13 12 9 6 9 14 10 11 11 9)
+    Radius:  6
+    Diameter:  14
+
+    
 Visualise graphs with:
     
     (v/print-matrix (G 5 4))

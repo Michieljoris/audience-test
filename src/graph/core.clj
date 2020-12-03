@@ -60,8 +60,11 @@
 
 (defn edges->adj-matrix
   "Returns an adjecency size by size matrix built from edges."
-  [size edges]
-  (reduce add-edge (make-nil-matrix size) edges))
+  ([size edges] (edges->adj-matrix size (constantly 1) edges ))
+  ([size weight-fn edges]
+   (reduce (fn [matrix edge]
+             (add-edge matrix edge (weight-fn)))
+           (make-nil-matrix size) edges)))
 
 (defn rand-graph-naive
   "Returns smallest possible (size -1) vector edges that together form a
@@ -143,7 +146,9 @@
   [n]
   (- n 1))
 
-(defn get-unset-edges [matrix]
+(defn get-unset-edges
+  "Find edges that are not set in the right triangle of the matrix"
+  [matrix]
   (let [size (count matrix)]
     (for [i (range size)
           j (range (inc i) size)
@@ -152,18 +157,19 @@
 
 (defn densify-oriented
   "Returns a size by size matrix of an oriented simple directed connected graph
-  with specified density from edges that describe a tree spanning a graph with
-  size vertices"
-  [edges size density]
+  with specified density and random weights in weight-range from edges that
+  describe a tree spanning a graph with size vertices"
+  [edges size density weight-range]
   {:pre [(not (> density (max-density size)))
          (not (< density (min-density size)))]}
-  (let [undirected-edges (map sort edges)
+  (let [undirected-edges (map sort edges) ;;make sure they're in the right triangle of the matrix
         matrix (edges->adj-matrix size undirected-edges)
-        extra-edges (get-random-subset (get-unset-edges matrix)
+        extra-edges (get-random-subset (get-unset-edges matrix)  ;;random extra edges to satisfy density
                                        (- density (min-density size)))]
-    matrix (->> (apply conj undirected-edges extra-edges)
-                (map shuffle)
-                (edges->adj-matrix size))))
+    matrix (->> (apply conj undirected-edges extra-edges) ;;collect all edges
+                (map shuffle) ;;set random direction
+                (edges->adj-matrix size (fn [] (inc (rand-int weight-range))))))) ;; and create matrix again
+
 
 ;; Implemented from https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm#CITEREFDijkstra1959
 ;; function Dijkstra(Graph, source):
@@ -247,6 +253,8 @@
   "Calculates shortest path from start to target vertex in graph described by
   matrix. Returns a map with path and weight keys, or nil if no path is found."
   [matrix start target]
+  {:pre [(<= 0 start (dec (count matrix)) )
+         (<= 0 target (dec (count matrix)) )]}
   (let [vertices (dijkstra matrix start)
         path (loop [{:keys [parent]} (vertices target) path [target]]
                (if (not= parent -1)
